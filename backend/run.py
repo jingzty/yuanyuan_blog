@@ -1,0 +1,13 @@
+"""
+远远的天空 — 后端入口
+启动：python run.py
+默认端口 5000
+"""
+
+from app import create_app
+
+app = create_app('development')
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

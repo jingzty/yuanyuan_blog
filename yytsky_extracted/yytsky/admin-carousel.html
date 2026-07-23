@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>轮播图管理 - 远远的天空</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ============================================
+       Carousel Admin – Component-Specific Styles
+       ============================================ */
+
+    /* Carousel grid */
+    .carousel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-xl);
+    }
+
+    .carousel-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 1px 2px var(--shadow);
+      overflow: hidden;
+      transition: box-shadow var(--duration) var(--ease);
+    }
+
+    .carousel-card:hover {
+      box-shadow: 0 4px 20px var(--shadow-md);
+    }
+
+    .carousel-card .card-preview {
+      position: relative;
+      height: 200px;
+      overflow: hidden;
+      background: var(--paper-deep);
+      cursor: pointer;
+    }
+
+    .carousel-card .card-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s var(--ease);
+    }
+
+    .carousel-card .card-preview:hover img {
+      transform: scale(1.04);
+    }
+
+    .carousel-card .card-preview .preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(26,26,28,0.5) 100%);
+      opacity: 0;
+      transition: opacity var(--duration) var(--ease);
+      display: flex;
+      align-items: flex-end;
+      padding: var(--space-lg);
+    }
+
+    .carousel-card .card-preview:hover .preview-overlay {
+      opacity: 1;
+    }
+
+    .preview-overlay .preview-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--white);
+    }
+
+    .carousel-card .card-body {
+      padding: var(--space-lg);
+    }
+
+    .carousel-card .card-body .field-row {
+      margin-bottom: var(--space-md);
+    }
+
+    .carousel-card .card-body .field-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .carousel-card .card-body .field-label {
+      display: block;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      margin-bottom: var(--space-xs);
+    }
+
+    .carousel-card .card-body .field-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--cream);
+      color: var(--ink);
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      outline: none;
+      transition: border-color var(--duration) var(--ease);
+    }
+
+    .carousel-card .card-body .field-input:focus {
+      border-color: var(--sky);
+      background: var(--white);
+    }
+
+    .carousel-card .card-body textarea.field-input {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .carousel-card .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-md) var(--space-lg);
+      border-top: 1px solid var(--border-light);
+      background: var(--cream);
+    }
+
+    .card-footer .card-order {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .card-order .order-number {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--ink);
+      min-width: 24px;
+      text-align: center;
+      background: var(--paper);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .card-order .order-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--ink-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all var(--duration) var(--ease);
+    }
+
+    .card-order .order-btn:hover {
+      background: var(--ink);
+      color: var(--white);
+      border-color: var(--ink);
+    }
+
+    .card-order .order-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .card-order .order-btn:disabled:hover {
+      background: var(--white);
+      color: var(--ink-muted);
+      border-color: var(--border);
+    }
+
+    .card-footer .card-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--ink-light);
+      user-select: none;
+    }
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .toggle-switch .toggle-track {
+      width: 40px;
+      height: 22px;
+      border-radius: 11px;
+      background: var(--border);
+      position: relative;
+      transition: background var(--duration) var(--ease);
+    }
+
+    .toggle-switch .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--white);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: transform var(--duration) var(--ease-out);
+    }
+
+    .toggle-switch input:checked + .toggle-track {
+      background: var(--sky);
+    }
+
+    .toggle-switch input:checked + .toggle-track::after {
+      transform: translateX(18px);
+    }
+
+    .toggle-label {
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+    }
+
+    /* Delete button small */
+    .btn-delete-sm {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--ink-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--duration) var(--ease);
+      font-size: 0.85rem;
+    }
+
+    .btn-delete-sm:hover {
+      background: #fde8e8;
+      color: var(--coral);
+      border-color: var(--coral-light);
+    }
+
+    /* Upload zone in modal */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-2xl);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--duration) var(--ease);
+      background: var(--paper);
+      position: relative;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--sky);
+      background: var(--paper-deep);
+    }
+
+    .upload-zone.drag-over {
+      border-color: var(--coral);
+      background: #fef5f2;
+    }
+
+    .upload-zone .upload-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .upload-zone .upload-placeholder .upload-icon {
+      font-size: 2.5rem;
+      color: var(--ink-muted);
+      opacity: 0.5;
+    }
+
+    .upload-zone .upload-placeholder p {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+    }
+
+    .upload-zone .upload-placeholder .upload-hint {
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      opacity: 0.6;
+    }
+
+    .upload-zone .upload-preview {
+      position: relative;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .upload-zone .upload-preview img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+    }
+
+    .upload-zone .upload-preview .remove-preview {
+      position: absolute;
+      top: var(--space-sm);
+      right: var(--space-sm);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(26,26,28,0.65);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background var(--duration) var(--ease);
+    }
+
+    .upload-zone .upload-preview .remove-preview:hover {
+      background: var(--coral);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: var(--space-4xl) var(--space-xl);
+      color: var(--ink-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: var(--space-lg);
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      margin-bottom: var(--space-lg);
+    }
+
+    /* Toast animation */
+    .toast-hiding {
+      animation: fadeOut 0.3s var(--ease-in-out) forwards;
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-10px); }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .carousel-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .admin-sidebar {
+        width: 100%;
+        position: relative;
+        padding: var(--space-md);
+      }
+      .admin-main {
+        margin-left: 0;
+      }
+      .admin-wrapper {
+        flex-direction: column;
+      }
+      .carousel-card .card-footer {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+      }
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+  <!-- ============================================
+       ADMIN WRAPPER
+       ============================================ -->
+  <div class="admin-wrapper">
+
+    <!-- ============================================
+         ADMIN SIDEBAR
+         ============================================ -->
+    <aside class="admin-sidebar">
+      <a href="index.html" class="admin-logo">
+        <span class="logo-dot"></span>
+        远远的天空
+      </a>
+
+      <ul class="admin-nav">
+        <!-- 内容管理 -->
+        <li class="nav-section">内容管理</li>
+        <li>
+          <a href="admin-categories.html">
+            <span class="nav-icon">&#9998;</span>
+            文章管理
+          </a>
+        </li>
+        <li>
+          <a href="admin-categories.html">
+            <span class="nav-icon">&#9776;</span>
+            分类管理
+          </a>
+        </li>
+
+        <!-- 系统设置 -->
+        <li class="nav-section">系统设置</li>
+        <li>
+          <a href="admin-carousel.html" class="active">
+            <span class="nav-icon">&#9635;</span>
+            轮播图管理
+          </a>
+        </li>
+        <li>
+          <a href="admin-editor.html">
+            <span class="nav-icon">&#9997;</span>
+            撰写文章
+          </a>
+        </li>
+      </ul>
+
+      <a href="index.html" class="back-link">&larr; 返回前台</a>
+    </aside>
+
+    <!-- ============================================
+         ADMIN MAIN
+         ============================================ -->
+    <main class="admin-main" id="adminMain">
+
+      <!-- Page Header -->
+      <div class="admin-page-header">
+        <h1>轮播图管理</h1>
+        <button class="btn btn-primary" id="btnAddSlide" onclick="openAddModal()">
+          <span>&#10010;</span> 添加轮播图
+        </button>
+      </div>
+
+      <!-- Carousel Grid -->
+      <div class="carousel-grid" id="carouselGrid">
+        <!-- Cards will be rendered by JS -->
+      </div>
+
+      <!-- Empty state (hidden by default) -->
+      <div class="empty-state" id="emptyState" style="display:none;">
+        <div class="empty-icon">&#9638;</div>
+        <p>还没有轮播图，点击上方按钮添加第一张</p>
+        <button class="btn btn-primary" onclick="openAddModal()">
+          <span>&#10010;</span> 添加轮播图
+        </button>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================
+       ADD / EDIT MODAL
+       ============================================ -->
+  <div class="modal-overlay" id="modalOverlay" style="display:none;" onclick="closeModalOutside(event)">
+    <div class="modal" style="max-width: 600px;" onclick="event.stopPropagation()">
+      <h3 id="modalTitle">添加轮播图</h3>
+
+      <div class="form-group">
+        <label>轮播图片</label>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">&#128247;</span>
+            <p>点击上传或拖拽图片到此处</p>
+            <span class="upload-hint">推荐尺寸 1920 &times; 900，支持 JPG / PNG / WebP</span>
+          </div>
+          <div class="upload-preview" id="uploadPreview" style="display:none;">
+            <img id="uploadPreviewImg" src="" alt="预览">
+            <span class="remove-preview" onclick="removePreview(event)" title="移除图片">&#10005;</span>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="modalTitleInput">标题</label>
+        <input type="text" class="form-control" id="modalTitleInput" placeholder="输入轮播图标题">
+      </div>
+
+      <div class="form-group">
+        <label for="modalDescInput">描述</label>
+        <textarea class="form-control" id="modalDescInput" placeholder="输入轮播图描述文案" style="min-height: 80px;"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="modalLinkInput">链接地址（可选）</label>
+        <input type="text" class="form-control" id="modalLinkInput" placeholder="https://...">
+        <span class="form-hint">点击轮播图后跳转的目标地址</span>
+      </div>
+
+      <div class="form-group">
+        <label for="modalOrderInput">排序序号</label>
+        <input type="number" class="form-control" id="modalOrderInput" value="1" min="1" style="max-width: 120px;">
+        <span class="form-hint">数字越小越靠前</span>
+      </div>
+
+      <input type="hidden" id="modalEditId" value="">
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" id="btnSaveSlide" onclick="saveSlide()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       DELETE CONFIRMATION MODAL
+       ============================================ -->
+  <div class="modal-overlay" id="deleteModalOverlay" style="display:none;" onclick="closeDeleteModalOutside(event)">
+    <div class="modal" style="max-width: 400px;" onclick="event.stopPropagation()">
+      <h3>确认删除</h3>
+      <p style="color: var(--ink-light); font-size: 0.9rem; line-height: 1.6;">
+        确定要删除这张轮播图吗？此操作不可撤销。
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+        <button class="btn btn-danger" id="btnConfirmDelete" onclick="confirmDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       TOAST
+       ============================================ -->
+  <div class="toast toast-success" id="toast" style="display:none;">
+    <span id="toastIcon">&#10003;</span>
+    <span id="toastMessage">保存成功</span>
+  </div>
+
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* ==========================================
+         DATA STORE
+         ========================================== */
+      const STORAGE_KEY = 'yytsky_carousel_slides';
+
+      // Default slides – use actual hero images
+      const DEFAULT_SLIDES = [
+        {
+          id: 's1',
+          image: 'assets/hero-mountain.jpg',
+          title: '远山如黛',
+          description: '晨雾弥漫的山峦，如同水墨画中的远山，静谧而悠远。',
+          link: '',
+          order: 1,
+          visible: true
+        },
+        {
+          id: 's2',
+          image: 'assets/hero-alley.jpg',
+          title: '旧巷时光',
+          description: '斑驳的砖墙记录着城市变迁，转角处藏着旧时光的故事。',
+          link: '',
+          order: 2,
+          visible: true
+        },
+        {
+          id: 's3',
+          image: 'assets/hero-desk.jpg',
+          title: '书房一隅',
+          description: '阳光透过窗棂洒在木质书桌上，一杯茶，一本书，一个下午。',
+          link: '',
+          order: 3,
+          visible: true
+        }
+      ];
+
+      let slides = [];
+      let deleteTargetId = null;
+      let modalPreviewFile = null;
+
+      function loadSlides() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            slides = JSON.parse(raw);
+          } else {
+            slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
+            saveSlides();
+          }
+        } catch (e) {
+          slides = JSON.parse(JSON.stringify(DEFAULT_SLIDES));
+        }
+      }
+
+      function saveSlides() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(slides));
+      }
+
+      function generateId() {
+        return 's' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+      }
+
+      /* ==========================================
+         RENDER
+         ========================================== */
+      function renderGrid() {
+        const grid = document.getElementById('carouselGrid');
+        const empty = document.getElementById('emptyState');
+
+        if (slides.length === 0) {
+          grid.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+
+        empty.style.display = 'none';
+
+        // Sort by order
+        const sorted = [...slides].sort((a, b) => a.order - b.order);
+
+        grid.innerHTML = sorted.map(function(slide, index) {
+          const total = sorted.length;
+          const isFirst = index === 0;
+          const isLast = index === total - 1;
+
+          return `
+            <div class="carousel-card" data-id="${slide.id}">
+              <div class="card-preview" onclick="previewSlide('${slide.image}')">
+                <img src="${slide.image}" alt="${escapeHtml(slide.title)}" onerror="this.src='data:image/svg+xml,${encodeURIComponent('<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22200%22><rect fill=%22%23f0ebe0%22 width=%22400%22 height=%22200%22/><text x=%22200%22 y=%22110%22 text-anchor=%22middle%22 fill=%22%236b6b72%22 font-size=%2214%22 font-family=%22serif%22>图片加载失败</text></svg>')}'">
+                <div class="preview-overlay">
+                  <span class="preview-label">点击预览大图</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="field-row">
+                  <span class="field-label">标题</span>
+                  <input type="text" class="field-input" value="${escapeHtml(slide.title)}" onchange="updateSlideField('${slide.id}', 'title', this.value)" placeholder="输入标题">
+                </div>
+                <div class="field-row">
+                  <span class="field-label">描述</span>
+                  <textarea class="field-input" onchange="updateSlideField('${slide.id}', 'description', this.value)" placeholder="输入描述文案">${escapeHtml(slide.description)}</textarea>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="card-order">
+                  <button class="order-btn" ${isFirst ? 'disabled' : ''} onclick="moveSlide('${slide.id}', 'up')" title="上移">&#9650;</button>
+                  <span class="order-number">${slide.order}</span>
+                  <button class="order-btn" ${isLast ? 'disabled' : ''} onclick="moveSlide('${slide.id}', 'down')" title="下移">&#9660;</button>
+                </div>
+                <div class="card-actions">
+                  <label class="toggle-switch" title="${slide.visible ? '已显示' : '已隐藏'}">
+                    <input type="checkbox" ${slide.visible ? 'checked' : ''} onchange="toggleSlideVisible('${slide.id}', this.checked)">
+                    <span class="toggle-track"></span>
+                    <span class="toggle-label">${slide.visible ? '显示' : '隐藏'}</span>
+                  </label>
+                  <button class="btn-delete-sm" onclick="openDeleteModal('${slide.id}')" title="删除">
+                    &#128465;
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      /* ==========================================
+         SLIDE ACTIONS
+         ========================================== */
+      window.updateSlideField = function(id, field, value) {
+        var slide = slides.find(function(s) { return s.id === id; });
+        if (slide) {
+          slide[field] = value;
+          saveSlides();
+        }
+      };
+
+      window.toggleSlideVisible = function(id, checked) {
+        var slide = slides.find(function(s) { return s.id === id; });
+        if (slide) {
+          slide.visible = checked;
+          saveSlides();
+          renderGrid();
+          showToast(checked ? '轮播图已设为显示' : '轮播图已设为隐藏');
+        }
+      };
+
+      window.moveSlide = function(id, direction) {
+        var sorted = [...slides].sort(function(a, b) { return a.order - b.order; });
+        var idx = sorted.findIndex(function(s) { return s.id === id; });
+        if (idx === -1) return;
+
+        var targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= sorted.length) return;
+
+        // Swap order values
+        var temp = sorted[idx].order;
+        sorted[idx].order = sorted[targetIdx].order;
+        sorted[targetIdx].order = temp;
+
+        saveSlides();
+        renderGrid();
+        showToast('排序已更新');
+      };
+
+      window.previewSlide = function(imageSrc) {
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,26,28,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+        overlay.onclick = function() { overlay.remove(); };
+
+        var img = document.createElement('img');
+        img.src = imageSrc;
+        img.style.cssText = 'max-width:90vw;max-height:85vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);';
+        img.onerror = function() { overlay.remove(); };
+
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+      };
+
+      /* ==========================================
+         DELETE MODAL
+         ========================================== */
+      window.openDeleteModal = function(id) {
+        deleteTargetId = id;
+        document.getElementById('deleteModalOverlay').style.display = 'flex';
+      };
+
+      window.closeDeleteModal = function() {
+        deleteTargetId = null;
+        document.getElementById('deleteModalOverlay').style.display = 'none';
+      };
+
+      window.closeDeleteModalOutside = function(e) {
+        if (e.target === document.getElementById('deleteModalOverlay')) {
+          closeDeleteModal();
+        }
+      };
+
+      window.confirmDelete = function() {
+        if (!deleteTargetId) return;
+        slides = slides.filter(function(s) { return s.id !== deleteTargetId; });
+        saveSlides();
+        closeDeleteModal();
+        renderGrid();
+        showToast('轮播图已删除');
+      };
+
+      /* ==========================================
+         ADD / EDIT MODAL
+         ========================================== */
+      window.openAddModal = function() {
+        resetModalForm();
+        document.getElementById('modalTitle').textContent = '添加轮播图';
+        document.getElementById('btnSaveSlide').textContent = '保存';
+        document.getElementById('modalEditId').value = '';
+        document.getElementById('modalOverlay').style.display = 'flex';
+      };
+
+      window.closeModal = function() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        resetModalForm();
+      };
+
+      window.closeModalOutside = function(e) {
+        if (e.target === document.getElementById('modalOverlay')) {
+          closeModal();
+        }
+      };
+
+      function resetModalForm() {
+        document.getElementById('modalTitleInput').value = '';
+        document.getElementById('modalDescInput').value = '';
+        document.getElementById('modalLinkInput').value = '';
+        document.getElementById('modalOrderInput').value = slides.length + 1;
+        document.getElementById('modalEditId').value = '';
+        document.getElementById('fileInput').value = '';
+        modalPreviewFile = null;
+        document.getElementById('uploadPlaceholder').style.display = 'flex';
+        document.getElementById('uploadPreview').style.display = 'none';
+        document.getElementById('uploadPreviewImg').src = '';
+      }
+
+      /* ==========================================
+         IMAGE UPLOAD
+         ========================================== */
+      window.handleFileSelect = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        processFile(file);
+      };
+
+      function processFile(file) {
+        if (!file.type.match(/^image\//)) {
+          showToast('请选择图片文件', 'error');
+          return;
+        }
+
+        modalPreviewFile = file;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('uploadPlaceholder').style.display = 'none';
+          document.getElementById('uploadPreview').style.display = 'block';
+          document.getElementById('uploadPreviewImg').src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      window.removePreview = function(e) {
+        e.stopPropagation();
+        modalPreviewFile = null;
+        document.getElementById('fileInput').value = '';
+        document.getElementById('uploadPlaceholder').style.display = 'flex';
+        document.getElementById('uploadPreview').style.display = 'none';
+        document.getElementById('uploadPreviewImg').src = '';
+      };
+
+      // Drag & drop on upload zone
+      (function() {
+        var zone = document.getElementById('uploadZone');
+        if (!zone) return;
+
+        zone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          zone.classList.add('drag-over');
+        });
+
+        zone.addEventListener('dragleave', function() {
+          zone.classList.remove('drag-over');
+        });
+
+        zone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          zone.classList.remove('drag-over');
+          var file = e.dataTransfer.files[0];
+          if (file) processFile(file);
+        });
+      })();
+
+      /* ==========================================
+         SAVE SLIDE
+         ========================================== */
+      window.saveSlide = function() {
+        var title = document.getElementById('modalTitleInput').value.trim();
+        var desc = document.getElementById('modalDescInput').value.trim();
+        var link = document.getElementById('modalLinkInput').value.trim();
+        var order = parseInt(document.getElementById('modalOrderInput').value) || 1;
+
+        if (!title) {
+          showToast('请输入标题', 'error');
+          return;
+        }
+
+        var editId = document.getElementById('modalEditId').value;
+
+        if (editId) {
+          // Edit existing
+          var slide = slides.find(function(s) { return s.id === editId; });
+          if (slide) {
+            slide.title = title;
+            slide.description = desc;
+            slide.link = link;
+            slide.order = order;
+            if (modalPreviewFile) {
+              slide.image = URL.createObjectURL(modalPreviewFile);
+            }
+          }
+        } else {
+          // Add new
+          var imageSrc = modalPreviewFile
+            ? URL.createObjectURL(modalPreviewFile)
+            : 'assets/hero-mountain.jpg'; // fallback
+
+          slides.push({
+            id: generateId(),
+            image: imageSrc,
+            title: title,
+            description: desc,
+            link: link,
+            order: order,
+            visible: true
+          });
+        }
+
+        saveSlides();
+        closeModal();
+        renderGrid();
+        showToast(editId ? '轮播图已更新' : '轮播图已添加');
+      };
+
+      /* ==========================================
+         TOAST
+         ========================================== */
+      var toastTimer = null;
+
+      function showToast(message, type) {
+        type = type || 'success';
+        var toast = document.getElementById('toast');
+        var toastMsg = document.getElementById('toastMessage');
+        var toastIcon = document.getElementById('toastIcon');
+
+        toast.className = 'toast toast-' + type;
+        toastIcon.innerHTML = type === 'error' ? '&#10007;' : '&#10003;';
+        toastMsg.textContent = message;
+        toast.style.display = 'flex';
+
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function() {
+          toast.classList.add('toast-hiding');
+          toastTimer = setTimeout(function() {
+            toast.style.display = 'none';
+            toast.classList.remove('toast-hiding');
+          }, 300);
+        }, 2000);
+      }
+
+      window.showToast = showToast;
+
+      /* ==========================================
+         KEYBOARD SHORTCUTS
+         ========================================== */
+      document.addEventListener('keydown', function(e) {
+        // Esc to close modals
+        if (e.key === 'Escape') {
+          if (document.getElementById('deleteModalOverlay').style.display === 'flex') {
+            closeDeleteModal();
+          } else if (document.getElementById('modalOverlay').style.display === 'flex') {
+            closeModal();
+          }
+        }
+      });
+
+      /* ==========================================
+         INIT
+         ========================================== */
+      loadSlides();
+      renderGrid();
+    })();
+  </script>
+</body>
+</html>
