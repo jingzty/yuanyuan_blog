@@ -1237,11 +1237,12 @@ onBeforeUnmount(() => {
 
 .footer-brand .site-logo {
   margin-bottom: 1rem;
+  color: #1a1a1c;
 }
 
 .footer-brand p {
   font-size: 0.875rem;
-  color: #6b6b72;
+  color: #4a4a50;
   line-height: 1.6;
 }
 
@@ -1264,7 +1265,7 @@ onBeforeUnmount(() => {
 
 .footer-links a {
   font-size: 0.85rem;
-  color: #6b6b72;
+  color: #4a4a50;
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -1277,7 +1278,7 @@ onBeforeUnmount(() => {
   text-align: center;
   padding: 1.5rem 2rem;
   font-size: 0.8rem;
-  color: #6b6b72;
+  color: #4a4a50;
   border-top: 1px solid #e8e2d4;
   margin-top: 1.5rem;
 }
