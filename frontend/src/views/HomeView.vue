@@ -4,7 +4,7 @@
     <nav class="site-header" :class="{ scrolled: isScrolled }">
       <div class="header-inner">
         <router-link to="/" class="site-logo">
-          <span class="logo-dot"></span>
+          <CloudSun class="logo-icon" />
           远远的天空
         </router-link>
         <nav>
@@ -271,13 +271,24 @@
             <!-- 关于我 -->
             <div class="sidebar-widget">
               <h4>关于我</h4>
-              <p class="about-text">
-                你好，我是远远。<br>
-                一个热爱旅行、摄影和写作的人。在这里记录生活中的每一个值得被记住的瞬间。
-              </p>
-              <p class="about-sub">
-                目前正在探索世界的不同角落，用文字和镜头定格那些关于远方的想象。
-              </p>
+              <div class="about-avatar">
+                <img v-if="profile.avatar_url" :src="profile.avatar_url" alt="头像" />
+                <span v-else>{{ (profile.nickname || '远').charAt(0) }}</span>
+              </div>
+              <p class="about-text">{{ profile.bio || '暂无简介' }}</p>
+              <div v-if="profile.social_links && profile.social_links.length" class="about-social">
+                <a
+                  v-for="(link, i) in profile.social_links"
+                  :key="i"
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="social-link"
+                  :title="link.name"
+                >
+                  <span class="social-name">{{ link.name }}</span>
+                </a>
+              </div>
             </div>
           </aside>
 
@@ -290,7 +301,7 @@
       <div class="footer-inner">
         <div class="footer-brand">
           <div class="site-logo">
-            <span class="logo-dot"></span>
+            <CloudSun class="logo-icon" />
             远远的天空
           </div>
           <p>记录旅行、生活与远方。用文字和镜头，捕捉每一个值得被记住的瞬间。</p>
@@ -322,12 +333,13 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  ChevronLeft, ChevronRight, BookOpen, Search,
+  ChevronLeft, ChevronRight, BookOpen, Search, CloudSun,
 } from 'lucide-vue-next'
 import { list as listArticles } from '@/api/article'
 import { list as listCategories } from '@/api/category'
 import { list as listBanners } from '@/api/banner'
 import { list as listFeatured } from '@/api/featured'
+import { getProfile } from '@/api/profile'
 
 const router = useRouter()
 
@@ -405,6 +417,7 @@ function scrollToArticles() {
 const loading = ref(true)
 const articles = ref([])
 const categories = ref([])
+const profile = ref({ avatar_url: '', nickname: '远', bio: '' })
 
 const featuredList = ref([])
 const featuredArticles = computed(() => {
@@ -537,6 +550,15 @@ async function loadCategories() {
   }
 }
 
+async function loadProfile() {
+  try {
+    const data = await getProfile()
+    profile.value = data || {}
+  } catch (e) {
+    // ignore
+  }
+}
+
 async function loadBanners() {
   try {
     const res = await listBanners({ status: 'enabled' })
@@ -620,6 +642,7 @@ onMounted(() => {
   loadCategories()
   loadBanners()
   loadFeatured()
+  loadProfile()
   setupScrollReveal()
   document.addEventListener('visibilitychange', handleVisibilityChange)
 })
@@ -784,12 +807,10 @@ onBeforeUnmount(() => {
   text-decoration: none;
 }
 
-.logo-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d4856b;
-  display: inline-block;
+.logo-icon {
+  width: 22px;
+  height: 22px;
+  color: #d4856b;
 }
 
 .site-nav {
@@ -1210,13 +1231,65 @@ onBeforeUnmount(() => {
   font-size: 0.875rem;
   color: #3d3d42;
   line-height: 1.7;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  white-space: pre-wrap;
 }
 
-.about-sub {
-  font-size: 0.8rem;
-  color: #6b6b72;
-  line-height: 1.6;
+.about-avatar {
+  float: left;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #eef0f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e7eaef;
+  margin: 0 0.75rem 0.25rem 0;
+}
+
+.about-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-avatar span {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #0065fd;
+}
+
+.about-social {
+  clear: both;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: #4a4a50;
+  background: #faf6f0;
+  border: 1px solid #e7eaef;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.social-link:hover {
+  color: #0065fd;
+  border-color: #0065fd;
+  background: #e5e9ff;
+}
+
+.social-name {
+  font-weight: 500;
 }
 
 /* === Footer === */

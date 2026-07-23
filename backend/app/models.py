@@ -195,3 +195,37 @@ class FeaturedArticle(db.Model):
                 'categories': [c.to_dict() for c in a.categories],
             }
         return data
+
+
+# ============ 博主资料 ============
+class Profile(db.Model):
+    __tablename__ = 'profile'
+
+    id = db.Column(db.Integer, primary_key=True)
+    avatar_url = db.Column(db.String(500), nullable=True)
+    nickname = db.Column(db.String(64), nullable=False, default='远远')
+    bio = db.Column(db.Text, nullable=True)
+    social_links = db.Column(db.Text, nullable=True)  # JSON 格式
+    updated_at = db.Column(
+        db.DateTime,
+        default=now_utc,
+        onupdate=now_utc,
+        nullable=False,
+    )
+
+    def to_dict(self):
+        import json
+        social = []
+        if self.social_links:
+            try:
+                social = json.loads(self.social_links)
+            except Exception:
+                social = []
+        return {
+            'id': self.id,
+            'avatar_url': self.avatar_url,
+            'nickname': self.nickname,
+            'bio': self.bio,
+            'social_links': social,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }

@@ -15,3 +15,7 @@ export function me() {
 export function logout() {
   return request.post('/auth/logout')
 }
+
+export function changePassword(data) {
+  return request.post('/auth/change-password', data)
+}

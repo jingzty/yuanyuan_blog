@@ -119,3 +119,30 @@ def me():
 def logout():
     # JWT 无状态，前端删除 token 即可
     return success_response(message='已登出')
+
+
+@auth_bp.route('/auth/change-password', methods=['POST'])
+@jwt_required()
+def change_password():
+    """修改密码"""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return error_response('用户不存在', 404)
+
+    data = request.get_json() or {}
+    old_password = data.get('old_password') or ''
+    new_password = data.get('new_password') or ''
+
+    if not old_password or not new_password:
+        return error_response('请输入原密码和新密码', 400)
+    if len(new_password) < 6:
+        return error_response('新密码长度至少 6 位', 400)
+    if not user.check_password(old_password):
+        return error_response('原密码错误', 400)
+    if user.check_password(new_password):
+        return error_response('新密码不能与原密码相同', 400)
+
+    user.set_password(new_password)
+    db.session.commit()
+    return success_response(message='密码修改成功')

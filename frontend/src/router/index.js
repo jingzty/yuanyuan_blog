@@ -63,6 +63,11 @@ const routes = [
         name: 'admin-categories',
         component: () => import('@/views/admin/CategoryManageView.vue'),
       },
+      {
+        path: 'profile',
+        name: 'admin-profile',
+        component: () => import('@/views/admin/ProfileManageView.vue'),
+      },
     ],
   },
 ]
