@@ -68,7 +68,9 @@ const loadingRecent = ref(false)
 
 function formatDate(d) {
   if (!d) return '-'
-  const date = new Date(d)
+  const s = String(d)
+  const ds = /\d$/.test(s) ? s + 'Z' : s
+  const date = new Date(ds)
   return date.toLocaleString('zh-CN', { hour12: false })
 }
 

@@ -4,9 +4,11 @@
 数据库：SQLite
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+
+now_utc = lambda: datetime.now(timezone.utc)
 
 db = SQLAlchemy()
 
@@ -26,7 +28,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc, nullable=False)
 
     def set_password(self, password: str):
         self.password_hash = generate_password_hash(password)
@@ -48,7 +50,7 @@ class Category(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc, nullable=False)
 
     articles = db.relationship(
         'Article',
@@ -82,11 +84,11 @@ class Article(db.Model):
     status = db.Column(db.String(20), default='draft', nullable=False, index=True)
 
     published_at = db.Column(db.DateTime, nullable=True, index=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=now_utc,
+        onupdate=now_utc,
         nullable=False,
     )
 
@@ -128,11 +130,11 @@ class Banner(db.Model):
     # 状态：enabled / disabled
     status = db.Column(db.String(20), default='enabled', nullable=False, index=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=now_utc,
+        onupdate=now_utc,
         nullable=False,
     )
 
@@ -161,11 +163,11 @@ class FeaturedArticle(db.Model):
     # 状态：enabled / disabled
     status = db.Column(db.String(20), default='enabled', nullable=False, index=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=now_utc, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=now_utc,
+        onupdate=now_utc,
         nullable=False,
     )
 

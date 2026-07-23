@@ -9,7 +9,7 @@
 import io
 import random
 import string
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, request, session
 from flask_jwt_extended import (
@@ -32,7 +32,7 @@ def get_captcha():
 
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
     session['captcha_code'] = code
-    session['captcha_expires'] = datetime.utcnow().timestamp() + 300  # 5 分钟
+    session['captcha_expires'] = datetime.now(timezone.utc).timestamp() + 300  # 5 分钟
 
     # 生成图片
     width, height = 120, 48
@@ -84,7 +84,7 @@ def login():
     # 1. 验证码校验
     expected = session.get('captcha_code', '').upper()
     expires = session.get('captcha_expires', 0)
-    if not expected or datetime.utcnow().timestamp() > expires:
+    if not expected or datetime.now(timezone.utc).timestamp() > expires:
         return error_response('验证码已过期，请刷新', 401)
     if captcha != expected:
         return error_response('验证码错误', 401)

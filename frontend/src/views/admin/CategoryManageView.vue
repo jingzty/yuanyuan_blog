@@ -89,7 +89,9 @@ async function loadCategories() {
 
 function formatDate(d) {
   if (!d) return '-'
-  return new Date(d).toLocaleString('zh-CN', { hour12: false })
+  const s = String(d)
+  const ds = /\d$/.test(s) ? s + 'Z' : s
+  return new Date(ds).toLocaleString('zh-CN', { hour12: false })
 }
 
 // 弹窗

@@ -207,7 +207,9 @@ const readingTime = computed(() => {
 
 function formatDate(d) {
   if (!d) return ''
-  return new Date(d).toLocaleDateString('zh-CN')
+  const s = String(d)
+  const ds = /\d$/.test(s) ? s + 'Z' : s
+  return new Date(ds).toLocaleDateString('zh-CN')
 }
 
 async function loadArticle() {
