@@ -35,3 +35,7 @@ Thumbs.db
 # Tarballs / zips
 *.tar.gz
 *.zip
+
+# 设计稿模板目录
+muban_extracted/
+yytsky_extracted/
