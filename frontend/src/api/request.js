@@ -25,7 +25,7 @@ request.interceptors.response.use(
     const res = response.data
     // 后端统一返回 { code, message, data }
     if (res && typeof res.code !== 'undefined') {
-      if (res.code === 200 || res.code === 0) {
+      if (res.code === 200 || res.code === 0 || res.code === 201) {
         return res.data
       }
       // 业务错误

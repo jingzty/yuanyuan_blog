@@ -109,7 +109,7 @@ def create_article():
     if status not in ('draft', 'published'):
         return error_response('状态非法', 400)
 
-    from datetime import datetime
+    from datetime import datetime, timezone
     article = Article(
         title=title,
         summary=summary,
@@ -123,7 +123,7 @@ def create_article():
         except Exception:
             pass
     if status == 'published' and not article.published_at:
-        article.published_at = datetime.utcnow()
+        article.published_at = datetime.now(timezone.utc)
 
     # 关联分类
     if category_ids:
@@ -157,10 +157,10 @@ def update_article(article_id: int):
             return error_response('状态非法', 400)
         article.status = data['status']
         if article.status == 'published' and not article.published_at:
-            from datetime import datetime
-            article.published_at = datetime.utcnow()
+            from datetime import datetime, timezone
+            article.published_at = datetime.now(timezone.utc)
     if 'published_at' in data and data['published_at']:
-        from datetime import datetime
+        from datetime import datetime, timezone
         try:
             article.published_at = datetime.fromisoformat(data['published_at'])
         except Exception:
@@ -211,8 +211,8 @@ def article_stats():
     draft = db.session.query(func.count(Article.id)).filter(
         Article.status == 'draft'
     ).scalar() or 0
-    from datetime import datetime, timedelta
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    from datetime import datetime, timezone, timedelta
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_new = db.session.query(func.count(Article.id)).filter(
         Article.created_at >= today_start
     ).scalar() or 0

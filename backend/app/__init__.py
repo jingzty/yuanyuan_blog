@@ -29,12 +29,14 @@ def create_app(config_name: str = 'default') -> Flask:
     from app.api.category import category_bp
     from app.api.banner import banner_bp
     from app.api.featured import featured_bp
+    from app.api.profile import profile_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
     app.register_blueprint(article_bp, url_prefix='/api/v1')
     app.register_blueprint(category_bp, url_prefix='/api/v1')
     app.register_blueprint(banner_bp, url_prefix='/api/v1')
     app.register_blueprint(featured_bp, url_prefix='/api/v1')
+    app.register_blueprint(profile_bp, url_prefix='/api/v1')
 
     # ============ 全局错误处理 ============
     @app.errorhandler(400)

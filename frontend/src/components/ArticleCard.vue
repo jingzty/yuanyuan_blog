@@ -87,7 +87,10 @@ const tags = computed(() => {
 
 function formatDate(d) {
   if (!d) return ''
-  return new Date(d).toLocaleDateString('zh-CN')
+  const s = String(d)
+  // 强制 UTC 解析，避免浏览器时区差异
+  const ds = /\d$/.test(s) ? s + 'Z' : s
+  return new Date(ds).toLocaleDateString('zh-CN')
 }
 
 function goDetail() {

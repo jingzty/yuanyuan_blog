@@ -18,9 +18,10 @@
             <span>返回前台</span>
           </router-link>
           <div
-            class="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--accent-foreground)] text-sm font-medium cursor-pointer hover:ring-2 hover:ring-[var(--color-primary)]/30 transition-all"
+            class="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--accent-foreground)] text-sm font-medium cursor-pointer hover:ring-2 hover:ring-[var(--color-primary)]/30 transition-all overflow-hidden"
           >
-            {{ userInitial }}
+            <img v-if="profile.avatar_url" :src="profile.avatar_url" alt="头像" class="w-full h-full object-cover" />
+            <span v-else>{{ userInitial }}</span>
           </div>
         </div>
       </div>
@@ -40,7 +41,7 @@
           <nav class="space-y-1">
             <router-link
               to="/admin"
-              v-slot="{ isActive }"
+              v-slot="{ isActive, isExactActive }"
               custom
             >
               <a
@@ -48,7 +49,7 @@
                 @click.prevent="router.push('/admin')"
                 :class="[
                   'flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm transition-colors',
-                  isActive
+                  isExactActive
                     ? 'text-white bg-[var(--color-primary)] shadow-sm font-medium'
                     : 'text-[var(--foreground)] hover:bg-[var(--secondary)]',
                 ]"
@@ -137,6 +138,26 @@
                 <span>分类标签</span>
               </a>
             </router-link>
+
+            <router-link
+              to="/admin/profile"
+              v-slot="{ isActive }"
+              custom
+            >
+              <a
+                href="/admin/profile"
+                @click.prevent="router.push('/admin/profile')"
+                :class="[
+                  'flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm transition-colors',
+                  isActive
+                    ? 'text-white bg-[var(--color-primary)] shadow-sm font-medium'
+                    : 'text-[var(--foreground)] hover:bg-[var(--secondary)]',
+                ]"
+              >
+                <User class="w-4 h-4" />
+                <span>个人中心</span>
+              </a>
+            </router-link>
           </nav>
         </div>
 
@@ -165,13 +186,18 @@
           </nav>
         </div>
 
-        <!-- 底部 个人中心 -->
+        <!-- 底部 退出登录 -->
         <div class="absolute bottom-6 left-3 right-3">
-          <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm text-[var(--foreground)] hover:bg-[var(--secondary)] transition-colors">
-            <User class="w-4 h-4 text-[var(--muted-foreground)]" />
-            <span>个人中心</span>
+          <a
+            href="#"
+            @click.prevent="handleLogout"
+            class="flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm text-[var(--destructive)] hover:bg-[var(--secondary)] transition-colors"
+          >
+            <LogOut class="w-4 h-4" />
+            <span>退出</span>
           </a>
         </div>
+
       </aside>
 
       <!-- 右侧内容区 -->
@@ -196,17 +222,35 @@ import {
   Database,
   Shield,
   User,
+  LogOut,
 } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { getProfile } from '@/api/profile'
 
 const router = useRouter()
 const auth = useAuthStore()
+
+const profile = ref({ avatar_url: '', nickname: '' })
+
+onMounted(async () => {
+  try {
+    const data = await getProfile()
+    profile.value = data || {}
+  } catch (e) {
+    // ignore
+  }
+})
 
 const userInitial = computed(() => {
   const u = auth.user
   if (!u) return '远'
   return (u.nickname || u.username || '远').charAt(0)
 })
+
+function handleLogout() {
+  auth.logout()
+  router.push('/login')
+}
 </script>

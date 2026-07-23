@@ -5,7 +5,7 @@
 
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 # 添加 backend 目录到 path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -1519,7 +1519,7 @@ def seed():
 
         # ============ 创建文章 ============
         print('\n=== 创建文章 ===')
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         for i, a in enumerate(ARTICLES):
             article = Article(
                 title=a['title'],
