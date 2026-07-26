@@ -275,20 +275,8 @@
                 <img v-if="profile.avatar_url" :src="profile.avatar_url" alt="头像" />
                 <span v-else>{{ (profile.nickname || '远').charAt(0) }}</span>
               </div>
+              <div class="about-name">{{ profile.nickname || '远远' }}</div>
               <p class="about-text">{{ profile.bio || '暂无简介' }}</p>
-              <div v-if="profile.social_links && profile.social_links.length" class="about-social">
-                <a
-                  v-for="(link, i) in profile.social_links"
-                  :key="i"
-                  :href="link.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="social-link"
-                  :title="link.name"
-                >
-                  <span class="social-name">{{ link.name }}</span>
-                </a>
-              </div>
             </div>
           </aside>
 
@@ -1230,23 +1218,30 @@ onBeforeUnmount(() => {
 .about-text {
   font-size: 0.875rem;
   color: #3d3d42;
-  line-height: 1.7;
-  margin-bottom: 0;
+  line-height: 1.8;
+  margin: 0;
+  text-align: center;
   white-space: pre-wrap;
 }
 
+.about-name {
+  font-family: 'Noto Serif SC', 'STSong', 'Songti SC', 'SimSun', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1c;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
 .about-avatar {
-  float: left;
-  width: 56px;
-  height: 56px;
+  display: block;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   overflow: hidden;
   background: #eef0f4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 0 auto 0.75rem auto;
   border: 2px solid #e7eaef;
-  margin: 0 0.75rem 0.25rem 0;
 }
 
 .about-avatar img {
@@ -1254,42 +1249,10 @@ onBeforeUnmount(() => {
   height: 100%;
   object-fit: cover;
 }
-
 .about-avatar span {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #0065fd;
-}
-
-.about-social {
-  clear: both;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.social-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  color: #4a4a50;
-  background: #faf6f0;
-  border: 1px solid #e7eaef;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.social-link:hover {
-  color: #0065fd;
-  border-color: #0065fd;
-  background: #e5e9ff;
-}
-
-.social-name {
-  font-weight: 500;
 }
 
 /* === Footer === */
@@ -1512,10 +1475,16 @@ onBeforeUnmount(() => {
   transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.featured-side-swap-enter-from,
+/* 新卡片：从右侧 24px 处淡入，向左滑入到位 */
+.featured-side-swap-enter-from {
+  opacity: 0;
+  transform: translateX(24px);
+}
+
+/* 被换下的卡片：向左滑出（朝大图方向）并淡出 */
 .featured-side-swap-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateX(-24px);
 }
 
 .featured-side-swap-leave-active {

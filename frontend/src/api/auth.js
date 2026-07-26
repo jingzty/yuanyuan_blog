@@ -19,3 +19,7 @@ export function logout() {
 export function changePassword(data) {
   return request.post('/auth/change-password', data)
 }
+
+export function changeUsername(data) {
+  return request.post('/auth/change-username', data)
+}

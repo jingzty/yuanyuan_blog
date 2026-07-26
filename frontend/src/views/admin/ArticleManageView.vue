@@ -104,8 +104,28 @@
             <span class="text-sm tabular-nums">{{ row.view_count ?? row.views ?? 0 }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'draft'"
+              link
+              type="success"
+              size="small"
+              @click="onToggleStatus(row)"
+            >
+              <Upload class="w-3.5 h-3.5 mr-0.5" />
+              上线
+            </el-button>
+            <el-button
+              v-else
+              link
+              type="warning"
+              size="small"
+              @click="onToggleStatus(row)"
+            >
+              <Download class="w-3.5 h-3.5 mr-0.5" />
+              下线
+            </el-button>
             <el-button link type="primary" size="small" @click="onEdit(row)">
               <Pencil class="w-3.5 h-3.5 mr-0.5" />
               编辑
@@ -138,8 +158,8 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, Trash2, Pencil } from 'lucide-vue-next'
-import { list as listArticles, remove as removeArticle, batchRemove as batchRemoveArticles, stats as fetchStats } from '@/api/article'
+import { Plus, Search, Trash2, Pencil, Upload, Download } from 'lucide-vue-next'
+import { list as listArticles, remove as removeArticle, batchRemove as batchRemoveArticles, update as updateArticle, stats as fetchStats } from '@/api/article'
 import { list as listCategories } from '@/api/category'
 import StatCard from '@/components/StatCard.vue'
 
@@ -232,6 +252,19 @@ async function onDelete(row) {
     loadStats()
   } catch (e) {
     // 错误已提示
+  }
+}
+
+async function onToggleStatus(row) {
+  const newStatus = row.status === 'published' ? 'draft' : 'published'
+  const actionLabel = newStatus === 'published' ? '上线' : '下线'
+  try {
+    await updateArticle(row.id, { status: newStatus })
+    ElMessage.success(`${actionLabel}成功`)
+    loadArticles()
+    loadStats()
+  } catch (e) {
+    // error handled by interceptor
   }
 }
 

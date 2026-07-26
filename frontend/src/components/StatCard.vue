@@ -1,12 +1,12 @@
 <template>
   <div
-    class="relative overflow-hidden bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] p-5"
+    class="relative overflow-hidden bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-lg)] py-3 px-4"
   >
     <div class="absolute left-0 top-0 bottom-0 w-1" :style="{ background: color }" />
-    <div class="text-3xl font-semibold text-[var(--foreground)] tabular-nums">
+    <div class="text-2xl font-semibold text-[var(--foreground)] tabular-nums">
       {{ formattedValue }}
     </div>
-    <div class="mt-1 text-sm text-[var(--muted-foreground)]">{{ label }}</div>
+    <div class="mt-0.5 text-xs text-[var(--muted-foreground)]">{{ label }}</div>
   </div>
 </template>
 
