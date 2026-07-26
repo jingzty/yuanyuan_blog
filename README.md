@@ -1,8 +1,9 @@
 # 远远的天空 — 个人博客系统
 
-一个基于 **Vue 3 + Flask** 的全功能个人博客系统，支持文章管理、轮播图管理、分类标签、文章推荐等功能。
+一个基于 **Vue 3 + Flask** 的全功能个人博客系统，支持文章管理、轮播图管理、分类标签、文章推荐、管理员账号管理等功能。
 
-> **GitHub**: [github.com/jingzty/yuanyuan_blog](https://github.com/jingzty/yuanyuan_blog)
+> **GitHub**: [github.com/jingzty/yuanyuan_blog](https://github.com/jingzty/yuanyuan_blog)  
+> **版本**: v0.2.0
 
 ---
 
@@ -10,30 +11,33 @@
 
 | 页面 | 预览 |
 |------|------|
-| **首页** — Hero 轮播 + 文章列表 + 侧边栏 | ![首页](pic/01-home.png) |
-| **登录页** — 渐变背景 + 验证码登录 | ![登录页](pic/02-login.png) |
-| **后台仪表盘** — 统计卡片 + 后台布局 | ![后台仪表盘](pic/03-admin-dashboard.png) |
-| **文章管理** — 表格 + 筛选 + 分页 | ![文章管理](pic/04-admin-articles.png) |
+| **首页** — Hero 轮播 + 文章列表 + 关于博主侧边栏 | ![首页](pic/01-home.png) |
+| **登录页** — 渐变背景 + 验证码登录 + 云朵装饰 | ![登录页](pic/02-login.png) |
+| **后台仪表盘** — 统计卡片 + 侧边栏导航 | ![后台仪表盘](pic/03-admin-dashboard.png) |
+| **文章管理** — 表格 + 筛选 + 上线/下线快捷操作 | ![文章管理](pic/04-admin-articles.png) |
 | **轮播图管理** — 图片预览 + 排序 + 状态 | ![轮播图管理](pic/05-admin-banners.png) |
-| **文章详情** — Markdown 渲染 + 上下篇 | ![文章详情](pic/06-article-detail.png) |
+| **文章详情** — Markdown 渲染 + 上下篇导航 | ![文章详情](pic/06-article-detail.png) |
 
 ---
 
 ## ✨ 功能特性
 
 ### 前台功能
-- **Hero 轮播** — 3 张幻灯片，自动播放（5000ms 间隔），悬停暂停，左右切换 + 圆点指示器
+- **Hero 轮播** — 3 张幻灯片，自动播放（5000ms 间隔），悬停暂停，左右切换 + 圆点指示器，侧栏切换动画
 - **文章列表** — 展示最新 5 篇文章，包含封面、摘要、分类、标签、阅读量
-- **文章详情** — Markdown 渲染，上下篇导航，进入自动计数阅读量
-- **侧边栏** — 全文搜索、热门标签云、分类列表、关于博主
+- **文章详情** — Markdown 渲染，上下篇导航，进入自动计数阅读量，CloudSun 图标 logo
+- **侧边栏** — 全文搜索、热门标签云、分类列表、关于博主（居中头像+昵称布局）
 - **响应式布局** — 适配移动端到桌面端
+- **站点图标** — SVG favicon 与 CloudSun 品牌标识
 
 ### 后台管理
 - **仪表盘** — 统计数据概览
-- **文章管理** — CRUD 操作，Markdown 编辑器，草稿/发布状态
+- **文章管理** — CRUD 操作，Markdown 编辑器，草稿/发布状态，上线/下线快捷操作
+- **文章编辑** — 源码/所见即所得双模式，工具栏支持标题下拉选择（H1-H4）、加粗、斜体、链接、引用、代码块、图片
 - **轮播图管理** — 添加/编辑/排序/启用禁用
 - **文章推荐** — 精选文章管理
 - **分类管理** — 创建/编辑/删除
+- **个人中心** — 修改管理员账号（需密码确认）、修改密码
 - **JWT 认证** — 登录/登出，验证码保护
 
 ---
@@ -84,10 +88,11 @@ test5/
 │   │   ├── stores/auth.js      # 认证状态（Pinia）
 │   │   ├── api/                # API 请求层（axios）
 │   │   │   ├── request.js
-│   │   │   ├── auth.js
+│   │   │   ├── auth.js          # 登录/验证码/修改账号密码
 │   │   │   ├── article.js
 │   │   │   ├── banner.js
 │   │   │   ├── category.js
+│   │   │   ├── profile.js       # 博主资料 API
 │   │   │   └── featured.js
 │   │   ├── layouts/
 │   │   │   ├── FrontLayout.vue  # 前台布局（导航+页脚）
@@ -99,11 +104,12 @@ test5/
 │   │   │   ├── CategoryView.vue       # 分类文章
 │   │   │   └── admin/
 │   │   │       ├── DashboardView.vue      # 仪表盘
-│   │   │       ├── ArticleManageView.vue  # 文章管理
-│   │   │       ├── ArticleEditView.vue    # 新建/编辑文章
+│   │   │       ├── ArticleManageView.vue  # 文章管理（含上线/下线）
+│   │   │       ├── ArticleEditView.vue    # 新建/编辑文章（双模式编辑器）
 │   │   │       ├── BannerManageView.vue   # 轮播图管理
 │   │   │       ├── CategoryManageView.vue # 分类管理
-│   │   │       └── FeaturedManageView.vue # 文章推荐管理
+│   │   │       ├── FeaturedManageView.vue # 文章推荐管理
+│   │   │       └── ProfileManageView.vue  # 个人中心（修改账号/密码）
 │   │   └── components/
 │   │       ├── ArticleCard.vue  # 文章卡片组件
 │   │       └── StatCard.vue     # 统计卡片组件
@@ -194,6 +200,7 @@ npm run dev     # 启动开发服务器（默认 :5173）
 | 模型 | 说明 | 主要字段 |
 |------|------|----------|
 | `User` | 用户（单博主） | username, password_hash |
+| `Profile` | 博主资料 | avatar_url, nickname, bio |
 | `Article` | 文章 | title, summary, content, cover_url, view_count, status |
 | `Category` | 分类 | name, created_at |
 | `Banner` | 轮播图 | title, subtitle, image_url, link_url, sort_order |
@@ -209,10 +216,13 @@ npm run dev     # 启动开发服务器（默认 :5173）
 | GET | `/api/v1/auth/captcha` | 获取验证码 |
 | GET | `/api/v1/auth/me` | 当前用户信息 |
 | POST | `/api/v1/auth/logout` | 登出 |
+| POST | `/api/v1/auth/change-username` | 修改管理员账号 |
+| POST | `/api/v1/auth/change-password` | 修改密码 |
 | GET/POST/PUT/DELETE | `/api/v1/articles` | 文章 CRUD |
 | GET/POST/PUT/DELETE | `/api/v1/banners` | 轮播图 CRUD |
 | GET/POST/PUT/DELETE | `/api/v1/categories` | 分类 CRUD |
 | GET/POST/PUT/DELETE | `/api/v1/featured` | 文章推荐 CRUD |
+| GET/PUT | `/api/v1/profile` | 博主资料 CRUD |
 
 ---
 
