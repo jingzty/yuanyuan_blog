@@ -42,19 +42,25 @@
         </div>
       </div>
 
-      <!-- 社交链接 -->
+      <!-- 管理员账号 -->
       <div class="info-card">
-        <div class="section-title">社交链接</div>
-        <div v-for="(item, index) in form.social_links" :key="index" class="social-item">
-          <el-input v-model="item.name" placeholder="名称" class="social-name" />
-          <el-input v-model="item.url" placeholder="https://…" class="social-url" />
-          <el-button type="danger" :icon="Delete" circle size="small" @click="removeSocial(index)" />
+        <div class="section-title">管理员账号</div>
+        <div class="current-account">
+          <span class="label">当前账号：</span>
+          <span class="value">{{ currentUsername }}</span>
         </div>
-        <p v-if="!form.social_links.length" class="empty-hint">还没有社交链接</p>
+        <el-form label-width="72px" label-position="right">
+          <el-form-item label="新账号">
+            <el-input v-model="accountForm.username" placeholder="输入新的管理员账号" maxlength="64" />
+          </el-form-item>
+          <el-form-item label="当前密码">
+            <el-input v-model="accountForm.password" type="password" show-password placeholder="输入当前密码以确认" />
+          </el-form-item>
+        </el-form>
         <div class="card-actions">
-          <el-button @click="addSocial">+ 添加链接</el-button>
-          <el-button type="primary" :loading="saving" @click="onSave">保存</el-button>
+          <el-button type="primary" :loading="accountSaving" @click="onChangeAccount">修改账号</el-button>
         </div>
+        <p class="form-hint">修改账号后需使用新账号重新登录，原账号将立即失效。</p>
       </div>
 
       <!-- 修改密码 -->
@@ -80,17 +86,20 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Delete } from '@element-plus/icons-vue'
 import { getProfile, updateProfile } from '@/api/profile'
-import { changePassword } from '@/api/auth'
+import { changePassword, changeUsername } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+
+const currentUsername = computed(() => auth.user?.username || '—')
 
 const form = reactive({
   avatar_url: '',
   nickname: '',
   bio: '',
-  social_links: [],
 })
 
 const saving = ref(false)
@@ -102,13 +111,11 @@ const pwdForm = reactive({
 })
 const pwdSaving = ref(false)
 
-function addSocial() {
-  form.social_links.push({ name: '', url: '' })
-}
-
-function removeSocial(index) {
-  form.social_links.splice(index, 1)
-}
+const accountForm = reactive({
+  username: '',
+  password: '',
+})
+const accountSaving = ref(false)
 
 async function loadProfile() {
   try {
@@ -116,7 +123,6 @@ async function loadProfile() {
     form.avatar_url = data.avatar_url || ''
     form.nickname = data.nickname || ''
     form.bio = data.bio || ''
-    form.social_links = Array.isArray(data.social_links) ? data.social_links.map(s => ({ ...s })) : []
   } catch (e) {
     // ignore
   }
@@ -129,7 +135,6 @@ async function onSave() {
       avatar_url: form.avatar_url,
       nickname: form.nickname,
       bio: form.bio,
-      social_links: form.social_links.filter(s => s.name || s.url),
     })
     ElMessage.success('保存成功')
   } catch (e) {
@@ -166,6 +171,44 @@ async function onChangePwd() {
     // error handled by interceptor
   } finally {
     pwdSaving.value = false
+  }
+}
+
+async function onChangeAccount() {
+  const newUsername = (accountForm.username || '').trim()
+  if (!newUsername) {
+    ElMessage.warning('请输入新账号')
+    return
+  }
+  if (newUsername.length < 3 || newUsername.length > 64) {
+    ElMessage.warning('账号长度需在 3-64 个字符之间')
+    return
+  }
+  if (newUsername === auth.user?.username) {
+    ElMessage.warning('新账号不能与当前账号相同')
+    return
+  }
+  if (!accountForm.password) {
+    ElMessage.warning('请输入当前密码以确认操作')
+    return
+  }
+  accountSaving.value = true
+  try {
+    const data = await changeUsername({
+      username: newUsername,
+      password: accountForm.password,
+    })
+    // 同步更新本地 store
+    if (auth.user) {
+      auth.user.username = data?.username || newUsername
+    }
+    ElMessage.success('账号修改成功，下次请使用新账号登录')
+    accountForm.username = ''
+    accountForm.password = ''
+  } catch (e) {
+    // error handled by interceptor
+  } finally {
+    accountSaving.value = false
   }
 }
 
@@ -230,31 +273,6 @@ onMounted(loadProfile)
   flex: 1;
 }
 
-/* 社交链接行 */
-.social-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-.social-item:last-child {
-  margin-bottom: 0;
-}
-.social-name {
-  width: 140px;
-  flex-shrink: 0;
-}
-.social-url {
-  flex: 1;
-}
-
-.empty-hint {
-  font-size: 0.85rem;
-  color: var(--muted-foreground);
-  padding: 0.25rem 0;
-  margin-bottom: 0.75rem;
-}
-
 /* 卡片底部操作 */
 .card-actions {
   display: flex;
@@ -263,5 +281,33 @@ onMounted(loadProfile)
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
+}
+
+/* 当前账号展示 */
+.current-account {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+.current-account .label {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.current-account .value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+  font-family: 'Fira Code', monospace;
+}
+
+/* 表单提示 */
+.form-hint {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
 }
 </style>

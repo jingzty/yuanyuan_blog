@@ -104,7 +104,14 @@
           <button type="button" @click="onToolbar('bold')" title="加粗 (Ctrl+B)"><strong>B</strong></button>
           <button type="button" @click="onToolbar('italic')" title="斜体 (Ctrl+I)"><em>I</em></button>
           <span class="toolbar-divider"></span>
-          <button type="button" @click="onToolbar('heading')" title="标题">H</button>
+          <select class="heading-select" @mousedown.stop @change="onHeadingSelect($event)" title="标题">
+            <option value="">H</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+            <option value="h4">H4</option>
+            <option value="p">P</option>
+          </select>
           <button type="button" @click="onToolbar('link')" title="链接">🔗</button>
           <button type="button" @click="onToolbar('image')" title="图片">🖼</button>
           <span class="toolbar-divider"></span>
@@ -158,7 +165,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { get as getArticle, create as createArticle, update as updateArticle } from '@/api/article'
@@ -222,31 +229,6 @@ function mdWrap(before, after, placeholder) {
     } else {
       ta.setSelectionRange(start, start + insertion.length)
     }
-  })
-}
-
-// 工具栏：插入标题（循环 H1→H2→H3→H1）
-function insertHeading() {
-  const ta = textareaRef.value
-  if (!ta) return
-  const start = ta.selectionStart
-  const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1
-  const lineEnd = ta.value.indexOf('\n', start)
-  const end = lineEnd === -1 ? ta.value.length : lineEnd
-  const currentLine = ta.value.substring(lineStart, end)
-
-  let level = 1
-  if (/^# /.test(currentLine)) level = 2
-  else if (/^## /.test(currentLine)) level = 3
-  else if (/^### /.test(currentLine)) level = 1
-
-  const prefix = '#'.repeat(level) + ' '
-  const newLine = prefix + currentLine.replace(/^#+ /, '')
-  form.content = ta.value.substring(0, lineStart) + newLine + ta.value.substring(end)
-
-  nextTick(() => {
-    ta.focus({ preventScroll: true })
-    ta.setSelectionRange(lineStart, lineStart + newLine.length)
   })
 }
 
@@ -340,7 +322,19 @@ function renderToWysiwyg() {
 
 function syncWysiwygToSource() {
   if (!wysiwygRef.value) return
+  cleanupEmptyTags(wysiwygRef.value)
   form.content = htmlToMarkdown(wysiwygRef.value)
+}
+
+// 清除空的格式化标签（如 <strong></strong>、<b></b>、<em></em>、<i></i> 等）
+// 这些空标签是 contenteditable 回车时浏览器自动产生的，看不见但会导致 Markdown 出现多余标记
+function cleanupEmptyTags(root) {
+  const tags = root.querySelectorAll('strong, b, em, i, u, s, del, code, small, mark, sub, sup')
+  tags.forEach((el) => {
+    if (!el.textContent.trim()) {
+      el.replaceWith(...el.childNodes)
+    }
+  })
 }
 
 // 所见即所得模式下粘贴：把剪贴板里的 markdown 源码即时渲染成 HTML 插入
@@ -361,7 +355,6 @@ function onToolbar(action) {
     switch (action) {
       case 'bold': return mdWrap('**', '**', '加粗文字')
       case 'italic': return mdWrap('*', '*', '斜体文字')
-      case 'heading': return insertHeading()
       case 'link': return mdWrap('[', '](url)', '链接文字')
       case 'image': return mdWrap('![', '](url)', '图片描述')
       case 'quote': return mdWrap('> ', '', '引用文字')
@@ -375,7 +368,6 @@ function onToolbar(action) {
     switch (action) {
       case 'bold': return document.execCommand('bold')
       case 'italic': return document.execCommand('italic')
-      case 'heading': return richHeading()
       case 'link': return richLink()
       case 'image': return richImage()
       case 'quote': return document.execCommand('formatBlock', false, 'BLOCKQUOTE')
@@ -388,29 +380,79 @@ function onToolbar(action) {
   }
 }
 
-// 富文本：标题循环 P -> H2 -> H3 -> H4 -> P
-function richHeading() {
-  const sel = window.getSelection()
-  let node = sel.anchorNode
-  while (node && node.parentElement && node.parentElement !== wysiwygRef.value) {
-    node = node.parentElement
+// 标题下拉选择事件
+function onHeadingSelect(e) {
+  const level = e.target.value
+  if (!level) return
+  // 选择后重置下拉框
+  e.target.value = ''
+  if (editorMode.value === 'source') {
+    setHeadingSource(level)
+  } else {
+    setHeadingWysiwyg(level)
   }
-  const cur = node && node.tagName ? node.tagName.toLowerCase() : 'p'
-  let next = 'H2'
-  if (cur === 'h2') next = 'H3'
-  else if (cur === 'h3') next = 'H4'
-  else if (cur === 'h4') next = 'P'
-  document.execCommand('formatBlock', false, next)
 }
 
-function richLink() {
-  const url = window.prompt('输入链接地址')
-  if (url) document.execCommand('createLink', false, url)
+// 源码模式：设置指定标题等级
+function setHeadingSource(level) {
+  const ta = textareaRef.value
+  if (!ta) return
+  const start = ta.selectionStart
+  const lineStart = ta.value.lastIndexOf('\n', start - 1) + 1
+  const lineEnd = ta.value.indexOf('\n', start)
+  const end = lineEnd === -1 ? ta.value.length : lineEnd
+  const currentLine = ta.value.substring(lineStart, end)
+
+  let prefix = ''
+  if (level === 'h1') prefix = '# '
+  else if (level === 'h2') prefix = '## '
+  else if (level === 'h3') prefix = '### '
+  else if (level === 'h4') prefix = '#### '
+
+  const newLine = currentLine.replace(/^#{1,4} /, '')  // 移除已有标题标记
+  const replacement = prefix ? prefix + newLine : newLine
+  ta.value = ta.value.substring(0, lineStart) + replacement + ta.value.substring(end)
+  form.content = ta.value
+  nextTick(() => {
+    ta.focus({ preventScroll: true })
+    const offset = lineStart + replacement.length
+    ta.setSelectionRange(offset, offset)
+  })
 }
 
-function richImage() {
-  const url = window.prompt('输入图片地址')
-  if (url) document.execCommand('insertImage', false, url)
+// WYSIWYG 模式：设置指定标题等级
+function setHeadingWysiwyg(level) {
+  if (!wysiwygRef.value) return
+  wysiwygRef.value.focus()
+  if (level === 'p') {
+    document.execCommand('formatBlock', false, 'P')
+  } else {
+    document.execCommand('formatBlock', false, level.toUpperCase())
+  }
+}
+
+async function richLink() {
+  try {
+    const { value } = await ElMessageBox.prompt('输入链接地址', '插入链接', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    })
+    if (value) document.execCommand('createLink', false, value)
+  } catch (e) {
+    // 用户取消
+  }
+}
+
+async function richImage() {
+  try {
+    const { value } = await ElMessageBox.prompt('输入图片地址', '插入图片', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    })
+    if (value) document.execCommand('insertImage', false, value)
+  } catch (e) {
+    // 用户取消
+  }
 }
 
 function richCodeBlock() {
@@ -557,6 +599,35 @@ function handleKeydown(e) {
       ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end)
       ta.selectionStart = ta.selectionEnd = start + 2
       form.content = ta.value
+    }
+  }
+  // WYSIWYG 模式下 Enter 键：阻止新行继承加粗/斜体等行内格式
+  if (editorMode.value === 'wysiwyg' && e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    const sel = window.getSelection()
+    if (sel.rangeCount && sel.isCollapsed) {
+      // 检查光标是否在行内格式化标签内
+      let node = sel.anchorNode
+      let inFormat = false
+      while (node && node !== wysiwygRef.value) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const tag = node.nodeName.toLowerCase()
+          if (tag === 'strong' || tag === 'b' || tag === 'em' || tag === 'i') {
+            inFormat = true
+            break
+          }
+        }
+        node = node.parentElement
+      }
+      if (inFormat) {
+        e.preventDefault()
+        // 在格式化标签外插入新段落，然后焦点移到新段落
+        document.execCommand('insertParagraph')
+        // 清理可能产生的空标签
+        requestAnimationFrame(() => {
+          cleanupEmptyTags(wysiwygRef.value)
+        })
+        return
+      }
     }
   }
   // 所见即所得模式下 Ctrl+B/I 由浏览器原生 contenteditable 命令处理
@@ -818,6 +889,24 @@ onMounted(() => {
   height: 20px;
   background: var(--border);
   margin: 0 4px;
+}
+.editor-toolbar .heading-select {
+  appearance: auto;
+  background: transparent;
+  border: none;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  outline: none;
+}
+.editor-toolbar .heading-select:hover {
+  background: var(--secondary);
+}
+.editor-toolbar .heading-select:focus {
+  background: var(--secondary);
 }
 .editor-toolbar .mode-toggle {
   margin-left: auto;

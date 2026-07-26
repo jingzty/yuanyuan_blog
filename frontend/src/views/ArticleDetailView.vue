@@ -12,7 +12,7 @@
     <nav class="site-header" :class="{ scrolled: true }">
       <div class="header-inner">
         <router-link to="/" class="site-logo">
-          <span class="logo-dot"></span>
+          <CloudSun class="logo-icon" />
           远远的天空
         </router-link>
         <nav>
@@ -166,7 +166,7 @@ import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import {
-  ArrowLeft, ArrowRight, ArrowUp, Calendar, Eye, Clock, Link,
+  ArrowLeft, ArrowRight, ArrowUp, Calendar, Eye, Clock, Link, CloudSun,
 } from 'lucide-vue-next'
 import { get as getArticle } from '@/api/article'
 
@@ -407,12 +407,10 @@ onBeforeUnmount(() => {
   text-decoration: none;
 }
 
-.logo-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d4856b;
-  display: inline-block;
+.logo-icon {
+  width: 22px;
+  height: 22px;
+  color: #d4856b;
 }
 
 .site-nav {

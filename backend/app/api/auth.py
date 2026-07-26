@@ -121,6 +121,43 @@ def logout():
     return success_response(message='已登出')
 
 
+@auth_bp.route('/auth/change-username', methods=['POST'])
+@jwt_required()
+def change_username():
+    """修改管理员账号（用户名）"""
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return error_response('用户不存在', 404)
+
+    data = request.get_json() or {}
+    new_username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+
+    # 1. 校验密码（敏感操作需二次确认）
+    if not password:
+        return error_response('请输入当前密码以确认操作', 400)
+    if not user.check_password(password):
+        return error_response('密码错误', 401)
+
+    # 2. 校验新用户名
+    if not new_username:
+        return error_response('请输入新账号', 400)
+    if len(new_username) < 3 or len(new_username) > 64:
+        return error_response('账号长度需在 3-64 个字符之间', 400)
+    if new_username == user.username:
+        return error_response('新账号不能与当前账号相同', 400)
+
+    # 3. 唯一性校验
+    existing = User.query.filter_by(username=new_username).first()
+    if existing:
+        return error_response('该账号已被占用', 409)
+
+    user.username = new_username
+    db.session.commit()
+    return success_response(user.to_dict(), message='账号修改成功')
+
+
 @auth_bp.route('/auth/change-password', methods=['POST'])
 @jwt_required()
 def change_password():
